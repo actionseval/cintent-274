@@ -1,0 +1,245 @@
+name: python-package
+
+# CINTENT >> MANUAL_TRIGGER
+# on:
+#   push:
+#     branches: [ master ]
+#   pull_request:
+#     branches: [ master ]
+on: [repository_dispatch, workflow_dispatch]
+
+jobs:
+  pkg-install:
+    runs-on: ubuntu-latest
+    steps:
+      # CINTENT >> CHANGE_VERSION
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+          architecture: x64
+
+      # CINTENT >> INSERT_CINTENT
+      - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+      # CINTENT >> REMOVE_CACHE
+      # - name: Cache python modules
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ~/.cache/pip
+      #     key: ${{ runner.os }}-pkg-deps-${{ hashFiles('requirements.txt') }}-${{ hashFiles('**/*.py') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pkg-deps-${{ hashFiles('requirements.txt') }}-
+      #       ${{ runner.os }}-pkg-deps-
+      #       ${{ runner.os }}-
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . --upgrade
+
+      # CINTENT >> INSERT_CINTENT
+      - name: Upload CIntent Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ env.CINTENT_ARTIFACT_NAME }}
+          path: ${{ env.CINTENT_LOGS }}
+
+  pkg-test:
+    runs-on: ubuntu-latest
+    needs: pkg-install
+    steps:
+      # CINTENT >> CHANGE_VERSION
+      # - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+          architecture: x64
+
+      # CINTENT >> INSERT_CINTENT
+      - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+      # CINTENT >> REMOVE_CACHE
+      # - name: Cache python modules
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ~/.cache/pip
+      #     key: ${{ runner.os }}-pkg-deps-${{ hashFiles('requirements.txt') }}-${{ hashFiles('**/*.py') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pkg-deps-${{ hashFiles('requirements.txt') }}-
+      #       ${{ runner.os }}-pkg-deps-
+      #       ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . --upgrade
+          pip install -r .github/workflows/requirements.txt
+
+      - name: Run unittests
+        run: |
+          coverage run -m pytest test/
+          coverage xml
+
+      # CINTENT >> REMOVE_UPLOADS
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v1
+      #   with:
+      #     file: ./coverage.xml
+      #     flags: unittests
+      #     fail_ci_if_error: true
+
+      # CINTENT >> INSERT_CINTENT
+      - name: Upload CIntent Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ env.CINTENT_ARTIFACT_NAME }}
+          path: ${{ env.CINTENT_LOGS }}
+
+  flake8-py3:
+    runs-on: ubuntu-latest
+    steps:
+      # CINTENT >> CHANGE_VERSION
+      # - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      # CINTENT >> INSERT_CINTENT
+      - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+          architecture: x64
+
+      # CINTENT >> INSERT_CINTENT
+      - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+      - name: Run flake8
+        run: |
+          pip install flake8
+          flake8 --version
+          flake8 ./
+
+      # CINTENT >> INSERT_CINTENT
+      - name: Upload CIntent Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ env.CINTENT_ARTIFACT_NAME }}
+          path: ${{ env.CINTENT_LOGS }}
+
+
+  mypy-py3:
+    runs-on: ubuntu-latest
+    needs: pkg-install
+    steps:
+      # CINTENT >> CHANGE_VERSION
+      # - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+          architecture: x64
+
+      # CINTENT >> INSERT_CINTENT
+      - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+      # CINTENT >> REMOVE_CACHE
+      # - name: Cache python modules
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ~/.cache/pip
+      #     key: ${{ runner.os }}-pkg-deps-${{ hashFiles('requirements.txt') }}-${{ hashFiles('**/*.py') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pkg-deps-${{ hashFiles('requirements.txt') }}-
+      #       ${{ runner.os }}-pkg-deps-
+      #       ${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . --upgrade
+          pip install mypy
+      
+      - name: Run mypy
+        run: |
+          mypy --version
+          mypy --config-file mypy.ini
+
+      # CINTENT >> INSERT_CINTENT
+      - name: Upload CIntent Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ env.CINTENT_ARTIFACT_NAME }}
+          path: ${{ env.CINTENT_LOGS }}
+
+  # CINTENT >> NOT_CI
+  # docker-ready:
+  #   runs-on: ubuntu-latest
+  #   needs: pkg-install
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Build docker image
+  #       run: docker build . -t doctr-py3.8.1-tf2.4-slim
+  #     - name: Run docker container
+  #       run: docker run -it a6d96d3aec4f python -c 'import doctr'
+
+  docs-build:
+    runs-on: ubuntu-latest
+    needs: pkg-install
+    steps:
+      # CINTENT >> CAHNGE_VERSION
+      # - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      # CINTENT >> INSERT_CINTENT
+      - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+          architecture: x64
+
+      # CINTENT >> INSERT_CINTENT
+      - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+      # CINTENT >> REMOVE_CACHE      
+      # - name: Cache python modules
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ~/.cache/pip
+      #     key: ${{ runner.os }}-pkg-deps-${{ hashFiles('requirements.txt') }}-${{ hashFiles('**/*.py') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pkg-deps-${{ hashFiles('requirements.txt') }}-
+      #       ${{ runner.os }}-pkg-deps-
+      #       ${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . --upgrade
+          pip install -r docs/requirements.txt
+
+      - name: Build documentation
+        run: |
+          sphinx-build docs/source docs/build -a
+
+      # CINTENT >> INSERT_CINTENT
+      - name: Upload CIntent Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ env.CINTENT_ARTIFACT_NAME }}
+          path: ${{ env.CINTENT_LOGS }}
